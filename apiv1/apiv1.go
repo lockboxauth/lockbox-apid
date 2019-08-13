@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"strings"
 
-	accountsv1 "impractical.co/auth/accounts/apiv1"
-	clientsv1 "impractical.co/auth/clients/apiv1"
-	"impractical.co/auth/oauth2"
-	scopesv1 "impractical.co/auth/scopes/apiv1"
-	"impractical.co/auth/sessions"
+	accountsv1 "lockbox.dev/accounts/apiv1"
+	clientsv1 "lockbox.dev/clients/apiv1"
+	"lockbox.dev/oauth2"
+	scopesv1 "lockbox.dev/scopes/apiv1"
+	"lockbox.dev/sessions"
 	yall "yall.in"
 )
 

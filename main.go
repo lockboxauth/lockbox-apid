@@ -11,29 +11,23 @@ import (
 
 	oidc "github.com/coreos/go-oidc"
 	jwt "github.com/dgrijalva/jwt-go"
-
-	"impractical.co/auth/cmd/authd/apiv1"
-	"impractical.co/auth/oauth2"
-	"impractical.co/auth/sessions"
-
-	"impractical.co/auth/grants"
-	grantsStorers "impractical.co/auth/grants/storers"
-
-	"impractical.co/auth/tokens"
-	tokensStorers "impractical.co/auth/tokens/storers"
-
-	"impractical.co/auth/accounts"
-	accountsv1 "impractical.co/auth/accounts/apiv1"
-	accountsPostgres "impractical.co/auth/accounts/storers/postgres"
-
-	clientsMemory "impractical.co/auth/clients/storers/memory"
-
-	"impractical.co/auth/scopes"
-	scopesv1 "impractical.co/auth/scopes/apiv1"
-	scopesStorers "impractical.co/auth/scopes/storers"
-
 	yall "yall.in"
 	"yall.in/colour"
+
+	"lockbox.dev/accounts"
+	accountsv1 "lockbox.dev/accounts/apiv1"
+	accountsPostgres "lockbox.dev/accounts/storers/postgres"
+	clientsMemory "lockbox.dev/clients/storers/memory"
+	"lockbox.dev/cmd/authd/apiv1"
+	"lockbox.dev/grants"
+	grantsPostgres "lockbox.dev/grants/storers/postgres"
+	"lockbox.dev/oauth2"
+	"lockbox.dev/scopes"
+	scopesv1 "lockbox.dev/scopes/apiv1"
+	scopesPostgres "lockbox.dev/scopes/storers/postgres"
+	"lockbox.dev/sessions"
+	"lockbox.dev/tokens"
+	tokensPostgres "lockbox.dev/tokens/storers/postgres"
 )
 
 func pathOrContents(in string) (string, error) {
@@ -83,22 +77,24 @@ func main() {
 	}
 	googleClientIDs := strings.Split(googleClientIDsStr, ",")
 
+	sess := sessions.Dependencies{
+		JWTPrivateKey: privateKey,
+		JWTPublicKey:  privateKey.Public().(*rsa.PublicKey),
+		ServiceID:     "https://test.lockbox.dev",
+	}
+
 	acctsv1 := accountsv1.APIv1{
 		Dependencies: accounts.Dependencies{
 			Storer: accountsPostgres.NewStorer(ctx, pg),
 		},
-		Log: log,
-		Sessions: sessions.Dependencies{
-			JWTPrivateKey: privateKey,
-			JWTPublicKey:  privateKey.Public().(*rsa.PublicKey),
-			ServiceID:     "https://id-test.impractical.services",
-		},
+		Log:      log,
+		Sessions: sess,
 	}
 
 	scopsv1 := scopesv1.APIv1{
 		Log: log,
 		Dependencies: scopes.Dependencies{
-			Storer: scopesStorers.NewPostgres(ctx, pg),
+			Storer: scopesPostgres.NewStorer(ctx, pg),
 		},
 	}
 
@@ -108,6 +104,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	// TODO: this should be stored in postgres
 	clientsStorer, err := clientsMemory.NewStorer()
 	if err != nil {
 		log.WithError(err).Error("Error creating in-memory clients storer")
@@ -124,23 +121,15 @@ func main() {
 		Clients:        clientsStorer,
 		Scopes:         scopsv1.Dependencies,
 		Grants: grants.Dependencies{
-			Storer: grantsStorers.NewPostgres(ctx, pg),
-			Refresh: tokens.Dependencies{
-				Storer:        tokensStorers.NewPostgres(ctx, pg),
-				JWTPrivateKey: privateKey,
-				JWTPublicKey:  privateKey.Public().(*rsa.PublicKey),
-				ServiceID:     "https://id-test.impractical.services",
-			},
-			Sessions: acctsv1.Sessions,
-			Log:      log,
+			Storer: grantsPostgres.NewStorer(ctx, pg),
+		},
+		Refresh: tokens.Dependencies{
+			Storer:        tokensPostgres.NewStorer(ctx, pg),
+			JWTPrivateKey: privateKey,
+			JWTPublicKey:  privateKey.Public().(*rsa.PublicKey),
+			ServiceID:     "https://id-test.impractical.services",
 		},
 		Log: log,
-	}
-
-	sessions := sessions.Dependencies{
-		JWTPrivateKey: privateKey,
-		JWTPublicKey:  privateKey.Public().(*rsa.PublicKey),
-		ServiceID:     "https://id-test.impractical.services",
 	}
 
 	v1 := apiv1.APIv1{
@@ -148,7 +137,7 @@ func main() {
 		Scopes:   scopsv1,
 		OAuth2:   oauth,
 		Log:      log,
-		Sessions: sessions,
+		Sessions: sess,
 	}
 	http.Handle("/", v1.Server(""))
 	err = http.ListenAndServe(":12345", nil)
