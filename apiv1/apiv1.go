@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"darlinggo.co/trout/v2"
 	accountsv1 "lockbox.dev/accounts/apiv1"
 	clientsv1 "lockbox.dev/clients/apiv1"
 	"lockbox.dev/oauth2"
@@ -59,24 +60,20 @@ func (a APIv1) tokenInContext(h http.Handler) http.Handler {
 }
 
 func (a APIv1) Server(baseURL string) http.Handler {
-	mux := http.NewServeMux()
-	baseURL = strings.TrimSuffix(baseURL, "/")
+	var router trout.Router
+	router.SetPrefix(baseURL)
 
 	accountsHandler := a.Accounts.Server(baseURL + "/accounts/v1")
-	mux.Handle(baseURL+"/accounts/v1/", accountsHandler)
-	mux.Handle(baseURL+"/accounts/v1", accountsHandler)
+	router.Prefix("/accounts/v1/").Handler(accountsHandler)
 
 	scopesHandler := a.Scopes.Server(baseURL + "/scopes/v1")
-	mux.Handle(baseURL+"/scopes/v1/", scopesHandler)
-	mux.Handle(baseURL+"/scopes/v1", scopesHandler)
+	router.Prefix("/scopes/v1/").Handler(scopesHandler)
 
 	oauth2Handler := a.OAuth2.Server(baseURL + "/oauth2/v1")
-	mux.Handle(baseURL+"/oauth2/v1/", oauth2Handler)
-	mux.Handle(baseURL+"/oauth2/v1", oauth2Handler)
+	router.Prefix("/oauth2/v1/").Handler(oauth2Handler)
 
 	clientsHandler := a.Clients.Server(baseURL + "/clients/v1")
-	mux.Handle(baseURL+"/clients/v1/", clientsHandler)
-	mux.Handle(baseURL+"/clients/v1", clientsHandler)
+	router.Prefix("/clients/v1/").Handler(clientsHandler)
 
-	return a.logInRequest(a.tokenInContext(mux))
+	return a.logInRequest(a.tokenInContext(router))
 }

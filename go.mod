@@ -14,6 +14,7 @@ replace (
 )
 
 require (
+	darlinggo.co/trout/v2 v2.0.1
 	github.com/coreos/go-oidc v2.0.0+incompatible
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	lockbox.dev/accounts v0.0.0
