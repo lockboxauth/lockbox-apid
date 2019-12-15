@@ -11,6 +11,7 @@ import (
 
 	oidc "github.com/coreos/go-oidc"
 	jwt "github.com/dgrijalva/jwt-go"
+	"impractical.co/credentials/envvar"
 	yall "yall.in"
 	"yall.in/colour"
 
@@ -45,21 +46,25 @@ func main() {
 	ctx := context.Background()
 	log := yall.New(colour.New(os.Stdout, yall.Debug))
 
-	// TODO: vault integration, pull postgres connstring, JWT private key out of Vault
-
-	connString := os.Getenv("PG_DB")
-	if connString == "" {
-		log.Error("PG_DB must be set")
+	// TODO: use gcp.Credentials instead, for KMS-encrypted credentials stored in GCP
+	connString, err := envvar.Credentials{}.Get(ctx, "PG_DB")
+	if err != nil {
+		log.Error(err.Error())
 		os.Exit(1)
 	}
-	pg, err := sql.Open("postgres", connString)
 
-	privateKeyStr := os.Getenv("JWT_PRIVATE_KEY")
-	if privateKeyStr == "" {
-		log.Error("JWT_PRIVATE_KEY must be set to the path or contents of the RSA private key to sign JWTs with.")
+	pg, err := sql.Open("postgres", string(connString))
+	if err != nil {
+		log.Error(err.Error())
 		os.Exit(1)
 	}
-	privateKeyStr, err = pathOrContents(privateKeyStr)
+
+	privateKeyInput, err := envvar.Credentials{}.Get(ctx, "JWT_PRIVATE_KEY")
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(1)
+	}
+	privateKeyStr, err := pathOrContents(string(privateKeyInput))
 	if err != nil {
 		log.WithError(err).Error("Error loading private key")
 		os.Exit(1)
