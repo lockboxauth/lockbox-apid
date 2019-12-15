@@ -17,8 +17,8 @@ import (
 	"lockbox.dev/accounts"
 	accountsv1 "lockbox.dev/accounts/apiv1"
 	accountsPostgres "lockbox.dev/accounts/storers/postgres"
-	clientsMemory "lockbox.dev/clients/storers/memory"
-	"lockbox.dev/cmd/authd/apiv1"
+	clientsPostgres "lockbox.dev/clients/storers/postgres"
+	"lockbox.dev/cmd/lockbox-apid/apiv1"
 	"lockbox.dev/grants"
 	grantsPostgres "lockbox.dev/grants/storers/postgres"
 	"lockbox.dev/oauth2"
@@ -104,13 +104,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// TODO: this should be stored in postgres
-	clientsStorer, err := clientsMemory.NewStorer()
-	if err != nil {
-		log.WithError(err).Error("Error creating in-memory clients storer")
-		os.Exit(1)
-	}
-
 	oauth := oauth2.Service{
 		GoogleIDVerifier: oauthProvider.Verifier(&oidc.Config{
 			SkipClientIDCheck: true,
@@ -118,7 +111,7 @@ func main() {
 		GoogleClients:  googleClientIDs,
 		TokenExpiresIn: 3600,
 		Accounts:       acctsv1.Dependencies,
-		Clients:        clientsStorer,
+		Clients:        clientsPostgres.NewStorer(ctx, pg),
 		Scopes:         scopsv1.Dependencies,
 		Grants: grants.Dependencies{
 			Storer: grantsPostgres.NewStorer(ctx, pg),
