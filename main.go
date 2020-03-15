@@ -4,13 +4,17 @@ import (
 	"context"
 	"crypto/rsa"
 	"database/sql"
+	hTmpl "html/template"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
+	textTmpl "text/template"
+	"time"
 
 	oidc "github.com/coreos/go-oidc"
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/mailgun/mailgun-go"
 	"impractical.co/credentials/envvar"
 	yall "yall.in"
 	"yall.in/colour"
@@ -18,10 +22,12 @@ import (
 	"lockbox.dev/accounts"
 	accountsv1 "lockbox.dev/accounts/apiv1"
 	accountsPostgres "lockbox.dev/accounts/storers/postgres"
+	clientsv1 "lockbox.dev/clients/apiv1"
 	clientsPostgres "lockbox.dev/clients/storers/postgres"
 	"lockbox.dev/cmd/lockbox-apid/apiv1"
 	"lockbox.dev/grants"
 	grantsPostgres "lockbox.dev/grants/storers/postgres"
+	"lockbox.dev/hmac"
 	"lockbox.dev/oauth2"
 	"lockbox.dev/scopes"
 	scopesv1 "lockbox.dev/scopes/apiv1"
@@ -46,7 +52,7 @@ func main() {
 	ctx := context.Background()
 	log := yall.New(colour.New(os.Stdout, yall.Debug))
 
-	// TODO: use gcp.Credentials instead, for KMS-encrypted credentials stored in GCP
+	// TODO: use gcp.Credentials instead, for encrypted credentials stored in GCP
 	connString, err := envvar.Credentials{}.Get(ctx, "PG_DB")
 	if err != nil {
 		log.Error(err.Error())
@@ -82,11 +88,19 @@ func main() {
 	}
 	googleClientIDs := strings.Split(googleClientIDsStr, ",")
 
-	sess := sessions.Dependencies{
-		JWTPrivateKey: privateKey,
-		JWTPublicKey:  privateKey.Public().(*rsa.PublicKey),
-		ServiceID:     "https://test.lockbox.dev",
+	mailgunAPIKey := os.Getenv("MAILGUN_API_KEY")
+	if mailgunAPIKey == "" {
+		log.Error("MAILGUN_API_KEY must be set to an API key for Mailgun")
+		os.Exit(1)
 	}
+
+	hmacSecret := os.Getenv("CLIENTS_SECRET")
+	if hmacSecret == "" {
+		log.Error("CLIENTS_SECRET must be set to a secret key for client registration")
+		os.Exit(1)
+	}
+
+	sess := sessions.NewDependencies(privateKey, privateKey.Public().(*rsa.PublicKey), "https://test.lockbox.dev")
 
 	acctsv1 := accountsv1.APIv1{
 		Dependencies: accounts.Dependencies{
@@ -103,12 +117,25 @@ func main() {
 		},
 	}
 
+	clients1 := clientsv1.APIv1{
+		Storer: clientsPostgres.NewStorer(ctx, pg),
+		Log:    log,
+		Signer: hmac.Signer{
+			MaxSkew: time.Hour,
+			OrgKey:  "LOCKBOXTEST",
+			Key:     "lockbox-test",
+			Secret:  []byte(hmacSecret),
+		},
+	}
+
 	oauthProvider, err := oidc.NewProvider(context.Background(), "https://accounts.google.com")
 	if err != nil {
 		log.WithError(err).Error("Error setting up Google ID token provider")
 		os.Exit(1)
 	}
 
+	plainTextTmpl := textTmpl.Must(textTmpl.New("body").Parse(`Please click this link to log in: {{.Code}}`))
+	htmlTmpl := hTmpl.Must(hTmpl.New("body").Parse(`<html><body><p>Please click this link to log in <a href="{{.Code}}">{{.Code}}</a>.</p></body></html>`))
 	oauth := oauth2.Service{
 		GoogleIDVerifier: oauthProvider.Verifier(&oidc.Config{
 			SkipClientIDCheck: true,
@@ -116,22 +143,31 @@ func main() {
 		GoogleClients:  googleClientIDs,
 		TokenExpiresIn: 3600,
 		Accounts:       acctsv1.Dependencies,
-		Clients:        clientsPostgres.NewStorer(ctx, pg),
-		Scopes:         scopsv1.Dependencies,
+		Clients:        clients1.Storer,
 		Grants: grants.Dependencies{
 			Storer: grantsPostgres.NewStorer(ctx, pg),
 		},
-		Refresh: tokens.Dependencies{
-			Storer:        tokensPostgres.NewStorer(ctx, pg),
-			JWTPrivateKey: privateKey,
-			JWTPublicKey:  privateKey.Public().(*rsa.PublicKey),
-			ServiceID:     "https://id-test.impractical.services",
+		Refresh: tokens.NewDependencies(tokensPostgres.NewStorer(ctx, pg),
+			privateKey,
+			privateKey.Public().(*rsa.PublicKey),
+			"https://test.lockbox.dev"),
+		Scopes:        scopsv1.Dependencies,
+		Sessions:      sess,
+		Log:           log,
+		CodeJWTSigner: oauth2.NewJWTSigner(privateKey.Public().(*rsa.PublicKey), privateKey),
+		ServiceID:     "https://test.lockbox.dev",
+		Emailer: oauth2.Mailgun{
+			From:          "lockbox.dev testing <test@mg.lockbox.dev>",
+			Subject:       "Your lockbox.dev login link",
+			PlainTextTmpl: plainTextTmpl,
+			HTMLTmpl:      htmlTmpl,
+			Client:        mailgun.NewMailgun("mg.lockbox.dev", mailgunAPIKey),
 		},
-		Log: log,
 	}
 
 	v1 := apiv1.APIv1{
 		Accounts: acctsv1,
+		Clients:  clients1,
 		Scopes:   scopsv1,
 		OAuth2:   oauth,
 		Log:      log,
