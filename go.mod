@@ -6,14 +6,14 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/mailgun/mailgun-go v2.0.0+incompatible
 	impractical.co/credentials v0.0.0-20191215213533-c816a96879a0
-	lockbox.dev/accounts v0.1.1-0.20200315024610-95df5087c70c
-	lockbox.dev/clients v0.2.2-0.20200315041548-189294691432
-	lockbox.dev/grants v0.2.1-0.20200315024855-e86c0a04e778
+	lockbox.dev/accounts v0.2.0
+	lockbox.dev/clients v0.3.0
+	lockbox.dev/grants v0.3.1-0.20200315111655-7b5171ddc9db
 	lockbox.dev/hmac v0.1.0
-	lockbox.dev/oauth2 v0.4.1-0.20200315044403-413fd41d6d84
+	lockbox.dev/oauth2 v0.4.1-0.20200315112345-6f9661066aa1
 	lockbox.dev/scopes v0.1.1-0.20200315025000-782728c67503
-	lockbox.dev/sessions v0.1.1-0.20200315044938-8f833e2c7842
-	lockbox.dev/tokens v0.2.1-0.20200315045426-0ae6f4151bda
+	lockbox.dev/sessions v0.1.1-0.20200315104056-a82faf5917e8
+	lockbox.dev/tokens v0.2.1-0.20200315103938-6db099e6f007
 	yall.in v0.0.1
 )
 

@@ -100,7 +100,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	sess := sessions.NewDependencies(privateKey, privateKey.Public().(*rsa.PublicKey), "https://test.lockbox.dev")
+	sess := sessions.Dependencies{
+		JWTPrivateKey: privateKey,
+		JWTPublicKey:  privateKey.Public().(*rsa.PublicKey),
+		ServiceID:     "https://test.lockbox.dev",
+	}
 
 	acctsv1 := accountsv1.APIv1{
 		Dependencies: accounts.Dependencies{
@@ -147,15 +151,15 @@ func main() {
 		Grants: grants.Dependencies{
 			Storer: grantsPostgres.NewStorer(ctx, pg),
 		},
-		Refresh: tokens.NewDependencies(tokensPostgres.NewStorer(ctx, pg),
-			privateKey,
-			privateKey.Public().(*rsa.PublicKey),
-			"https://test.lockbox.dev"),
-		Scopes:        scopsv1.Dependencies,
-		Sessions:      sess,
-		Log:           log,
-		CodeJWTSigner: oauth2.NewJWTSigner(privateKey.Public().(*rsa.PublicKey), privateKey),
-		ServiceID:     "https://test.lockbox.dev",
+		Refresh: tokens.Dependencies{
+			Storer:        tokensPostgres.NewStorer(ctx, pg),
+			JWTPrivateKey: privateKey,
+			JWTPublicKey:  privateKey.Public().(*rsa.PublicKey),
+			ServiceID:     "https://test.lockbox.dev",
+		},
+		Scopes:   scopsv1.Dependencies,
+		Sessions: sess,
+		Log:      log,
 		Emailer: oauth2.Mailgun{
 			From:          "lockbox.dev testing <test@mg.lockbox.dev>",
 			Subject:       "Your lockbox.dev login link",
