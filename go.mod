@@ -8,12 +8,12 @@ require (
 	impractical.co/credentials v0.0.0-20191215213533-c816a96879a0
 	lockbox.dev/accounts v0.2.0
 	lockbox.dev/clients v0.3.0
-	lockbox.dev/grants v0.3.1-0.20200315111655-7b5171ddc9db
+	lockbox.dev/grants v0.4.0
 	lockbox.dev/hmac v0.1.0
-	lockbox.dev/oauth2 v0.4.1-0.20200315112345-6f9661066aa1
-	lockbox.dev/scopes v0.1.1-0.20200315025000-782728c67503
-	lockbox.dev/sessions v0.1.1-0.20200315104056-a82faf5917e8
-	lockbox.dev/tokens v0.2.1-0.20200315103938-6db099e6f007
+	lockbox.dev/oauth2 v0.5.1
+	lockbox.dev/scopes v0.2.0
+	lockbox.dev/sessions v0.2.0
+	lockbox.dev/tokens v0.3.0
 	yall.in v0.0.1
 )
 
