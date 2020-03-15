@@ -53,19 +53,22 @@ func main() {
 	log := yall.New(colour.New(os.Stdout, yall.Debug))
 
 	// TODO: use gcp.Credentials instead, for encrypted credentials stored in GCP
-	connString, err := envvar.Credentials{}.Get(ctx, "PG_DB")
+	creds := envvar.Credentials{}
+
+	// set up postgres
+	connString, err := creds.Get(ctx, "PG_DB")
 	if err != nil {
 		log.Error(err.Error())
 		os.Exit(1)
 	}
-
 	pg, err := sql.Open("postgres", string(connString))
 	if err != nil {
 		log.Error(err.Error())
 		os.Exit(1)
 	}
 
-	privateKeyInput, err := envvar.Credentials{}.Get(ctx, "JWT_PRIVATE_KEY")
+	// set up JWT private key
+	privateKeyInput, err := creds.Get(ctx, "JWT_PRIVATE_KEY")
 	if err != nil {
 		log.Error(err.Error())
 		os.Exit(1)
@@ -81,31 +84,43 @@ func main() {
 		os.Exit(1)
 	}
 
+	// set up mailgun client
+	mailgunAPIKey, err := creds.Get(ctx, "MAILGUN_API_KEY")
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(1)
+	}
+	plainTextTmpl := textTmpl.Must(textTmpl.New("body").Parse(`Please click this link to log in: {{.Code}}`))
+	htmlTmpl := hTmpl.Must(hTmpl.New("body").Parse(`<html><body><p>Please click this link to log in <a href="{{.Code}}">{{.Code}}</a>.</p></body></html>`))
+
+	// setup the secret we'll use for authenticating requests to the clients service
+	hmacSecret, err := creds.Get(ctx, "CLIENTS_SECRET")
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(1)
+	}
+
+	// set up client IDs and library to verify Google accounts with
 	googleClientIDsStr := os.Getenv("GOOGLE_CLIENT_IDS")
 	if googleClientIDsStr == "" {
 		log.Error("GOOGLE_CLIENT_IDS must be set to the client IDs to accept Google ID tokens for, comma separated")
 		os.Exit(1)
 	}
 	googleClientIDs := strings.Split(googleClientIDsStr, ",")
-
-	mailgunAPIKey := os.Getenv("MAILGUN_API_KEY")
-	if mailgunAPIKey == "" {
-		log.Error("MAILGUN_API_KEY must be set to an API key for Mailgun")
+	oauthProvider, err := oidc.NewProvider(context.Background(), "https://accounts.google.com")
+	if err != nil {
+		log.WithError(err).Error("Error setting up Google ID token provider")
 		os.Exit(1)
 	}
 
-	hmacSecret := os.Getenv("CLIENTS_SECRET")
-	if hmacSecret == "" {
-		log.Error("CLIENTS_SECRET must be set to a secret key for client registration")
-		os.Exit(1)
-	}
-
+	// set up the sessions package
 	sess := sessions.Dependencies{
 		JWTPrivateKey: privateKey,
 		JWTPublicKey:  privateKey.Public().(*rsa.PublicKey),
 		ServiceID:     "https://test.lockbox.dev",
 	}
 
+	// set up the accounts API
 	acctsv1 := accountsv1.APIv1{
 		Dependencies: accounts.Dependencies{
 			Storer: accountsPostgres.NewStorer(ctx, pg),
@@ -114,6 +129,7 @@ func main() {
 		Sessions: sess,
 	}
 
+	// set up the scopes API
 	scopsv1 := scopesv1.APIv1{
 		Log: log,
 		Dependencies: scopes.Dependencies{
@@ -121,6 +137,7 @@ func main() {
 		},
 	}
 
+	// set up the clients API
 	clients1 := clientsv1.APIv1{
 		Storer: clientsPostgres.NewStorer(ctx, pg),
 		Log:    log,
@@ -128,18 +145,11 @@ func main() {
 			MaxSkew: time.Hour,
 			OrgKey:  "LOCKBOXTEST",
 			Key:     "lockbox-test",
-			Secret:  []byte(hmacSecret),
+			Secret:  hmacSecret,
 		},
 	}
 
-	oauthProvider, err := oidc.NewProvider(context.Background(), "https://accounts.google.com")
-	if err != nil {
-		log.WithError(err).Error("Error setting up Google ID token provider")
-		os.Exit(1)
-	}
-
-	plainTextTmpl := textTmpl.Must(textTmpl.New("body").Parse(`Please click this link to log in: {{.Code}}`))
-	htmlTmpl := hTmpl.Must(hTmpl.New("body").Parse(`<html><body><p>Please click this link to log in <a href="{{.Code}}">{{.Code}}</a>.</p></body></html>`))
+	// set up the OAuth2 API
 	oauth := oauth2.Service{
 		GoogleIDVerifier: oauthProvider.Verifier(&oidc.Config{
 			SkipClientIDCheck: true,
@@ -165,10 +175,11 @@ func main() {
 			Subject:       "Your lockbox.dev login link",
 			PlainTextTmpl: plainTextTmpl,
 			HTMLTmpl:      htmlTmpl,
-			Client:        mailgun.NewMailgun("mg.lockbox.dev", mailgunAPIKey),
+			Client:        mailgun.NewMailgun("mg.lockbox.dev", string(mailgunAPIKey)),
 		},
 	}
 
+	// set up our top-level API
 	v1 := apiv1.APIv1{
 		Accounts: acctsv1,
 		Clients:  clients1,
