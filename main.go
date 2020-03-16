@@ -131,9 +131,15 @@ func main() {
 
 	// set up the scopes API
 	scopsv1 := scopesv1.APIv1{
-		Log: log,
 		Dependencies: scopes.Dependencies{
 			Storer: scopesPostgres.NewStorer(ctx, pg),
+		},
+		Log: log,
+		Signer: hmac.Signer{
+			MaxSkew: time.Hour,
+			OrgKey:  "LOCKBOXTEST",
+			Key:     "lockbox-test",
+			Secret:  hmacSecret,
 		},
 	}
 
