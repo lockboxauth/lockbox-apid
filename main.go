@@ -12,9 +12,9 @@ import (
 	textTmpl "text/template"
 	"time"
 
-	oidc "github.com/coreos/go-oidc"
+	"github.com/coreos/go-oidc/v3/oidc"
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/mailgun/mailgun-go"
+	"github.com/mailgun/mailgun-go/v4"
 	"impractical.co/credentials/envvar"
 	yall "yall.in"
 	"yall.in/colour"
