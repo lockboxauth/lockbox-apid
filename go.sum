@@ -838,8 +838,8 @@ lockbox.dev/clients v0.3.1-0.20201227102114-4497b2228246/go.mod h1:9cZbdgw2iqbZo
 lockbox.dev/clients v0.5.0 h1:BYbNtZPSqHCcZma+7EKz8T+44EdJn+/98WaMNE4VJ7I=
 lockbox.dev/clients v0.5.0/go.mod h1:9cZbdgw2iqbZoCx9lcsGuwb/XY64t22JWXtFJVShtMk=
 lockbox.dev/grants v0.4.1-0.20201227110703-4da988f58248/go.mod h1:S6EisdvG1MVWXN8oGv1qoO19QqLtrpdosFxANH6aHAg=
-lockbox.dev/grants v0.5.1 h1:WgPBJD27NpcbImAXPvA3Qj8kLCagKG0KNhQuXmNXmyg=
-lockbox.dev/grants v0.5.1/go.mod h1:N275nauLl5NlUB5bPVNlE95/H0JGk1TVoBzTCVd/LLg=
+lockbox.dev/grants v0.6.0 h1:xjbdzcT3r/iVZ3xzTasQ/v61lvGZ5zucoD5p9qmGJF0=
+lockbox.dev/grants v0.6.0/go.mod h1:N275nauLl5NlUB5bPVNlE95/H0JGk1TVoBzTCVd/LLg=
 lockbox.dev/hmac v0.1.0/go.mod h1:4s83OfmK63Y9l4pKjEv1fezObEVam6xcgqDJdPIQdtM=
 lockbox.dev/hmac v0.2.0 h1:pjJqNn9l9Le4tTP6Q8iI1pc0Z33Waj/lS08SveFzXCk=
 lockbox.dev/hmac v0.2.0/go.mod h1:kXf3uDMizjFPvqFmFRWIBDAD6sA0gab6ayL0fNGSg0c=
