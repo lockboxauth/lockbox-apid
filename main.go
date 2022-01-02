@@ -198,5 +198,6 @@ func main() {
 	err = http.ListenAndServe(":12345", nil)
 	if err != nil {
 		log.WithError(err).Error("error starting server")
+		os.Exit(1)
 	}
 }
