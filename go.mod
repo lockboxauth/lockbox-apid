@@ -5,7 +5,7 @@ go 1.17
 require (
 	darlinggo.co/trout/v2 v2.0.1
 	github.com/coreos/go-oidc/v3 v3.1.0
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/golang-jwt/jwt/v4 v4.2.0
 	github.com/mailgun/mailgun-go/v4 v4.6.0
 	impractical.co/credentials v0.0.0-20200125083940-d3b3f49fde34
 	lockbox.dev/accounts v0.4.0
@@ -24,7 +24,6 @@ require (
 	darlinggo.co/pan v0.2.0 // indirect
 	github.com/adjust/goautoneg v0.0.0-20150426214442-d788f35a0315 // indirect
 	github.com/fatih/color v1.10.0 // indirect
-	github.com/golang-jwt/jwt/v4 v4.2.0 // indirect
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/google/uuid v1.1.2 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect

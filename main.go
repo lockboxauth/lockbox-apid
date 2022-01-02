@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/mailgun/mailgun-go/v4"
 	"impractical.co/credentials/envvar"
 	yall "yall.in"
