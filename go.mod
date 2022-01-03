@@ -12,7 +12,7 @@ require (
 	lockbox.dev/clients v0.5.0
 	lockbox.dev/grants v0.6.0
 	lockbox.dev/hmac v0.2.0
-	lockbox.dev/oauth2 v0.6.0
+	lockbox.dev/oauth2 v0.7.0
 	lockbox.dev/scopes v0.3.0
 	lockbox.dev/sessions v0.3.0
 	lockbox.dev/tokens v0.4.0
