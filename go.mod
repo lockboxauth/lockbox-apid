@@ -3,7 +3,7 @@ module lockbox.dev/cmd/lockbox-apid
 go 1.17
 
 require (
-	darlinggo.co/trout/v2 v2.0.1
+	darlinggo.co/trout/v2 v2.1.1
 	github.com/coreos/go-oidc/v3 v3.1.0
 	github.com/golang-jwt/jwt/v4 v4.2.0
 	github.com/mailgun/mailgun-go/v4 v4.6.0
@@ -12,7 +12,7 @@ require (
 	lockbox.dev/clients v0.5.0
 	lockbox.dev/grants v0.6.0
 	lockbox.dev/hmac v0.2.0
-	lockbox.dev/oauth2 v0.6.0
+	lockbox.dev/oauth2 v0.7.0
 	lockbox.dev/scopes v0.3.0
 	lockbox.dev/sessions v0.3.0
 	lockbox.dev/tokens v0.4.0
