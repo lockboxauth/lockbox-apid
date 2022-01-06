@@ -9,7 +9,7 @@ require (
 	github.com/mailgun/mailgun-go/v4 v4.6.0
 	impractical.co/credentials v0.0.0-20200125083940-d3b3f49fde34
 	lockbox.dev/accounts v0.4.0
-	lockbox.dev/clients v0.5.0
+	lockbox.dev/clients v0.6.0
 	lockbox.dev/grants v0.6.0
 	lockbox.dev/hmac v0.2.0
 	lockbox.dev/oauth2 v0.7.0
