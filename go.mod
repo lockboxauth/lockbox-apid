@@ -5,7 +5,7 @@ go 1.17
 require (
 	darlinggo.co/trout/v2 v2.1.1
 	github.com/coreos/go-oidc/v3 v3.2.0
-	github.com/golang-jwt/jwt/v4 v4.4.1
+	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/mailgun/mailgun-go/v4 v4.8.1
 	impractical.co/credentials v0.0.0-20200125083940-d3b3f49fde34
 	lockbox.dev/accounts v0.4.0
