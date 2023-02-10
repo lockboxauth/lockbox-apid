@@ -6,7 +6,7 @@ require (
 	darlinggo.co/trout/v2 v2.1.1
 	github.com/coreos/go-oidc/v3 v3.4.0
 	github.com/golang-jwt/jwt/v4 v4.4.3
-	github.com/mailgun/mailgun-go/v4 v4.8.1
+	github.com/mailgun/mailgun-go/v4 v4.8.2
 	impractical.co/credentials v0.0.0-20200125083940-d3b3f49fde34
 	lockbox.dev/accounts v0.4.0
 	lockbox.dev/clients v0.6.0
